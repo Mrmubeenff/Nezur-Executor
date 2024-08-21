@@ -1,7 +1,7 @@
 local ScriptEditorService = game:GetService("ScriptEditorService")
 local Selection = game:GetService("Selection")
-local Aegis = script.Aegis
-local DumpParser = require(script.DumpParser)
+local Aegis = script.Aegis --< https://github.com/lumin-dev/Aegis
+local DumpParser = require(script.DumpParser) --< https://create.roblox.com/store/asset/11741050274/DumpParser
 local Parsed = DumpParser.fetchFromServer()
 
 local toolbar : PluginToolbar = plugin:CreateToolbar("Aegis Converter")
