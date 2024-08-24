@@ -1,7 +1,7 @@
 local ScriptEditorService = game:GetService("ScriptEditorService")
 local Selection = game:GetService("Selection")
-local Aegis = script.Aegis --< https://github.com/lumin-dev/Aegis
-local DumpParser = require(script.DumpParser) --< https://create.roblox.com/store/asset/11741050274/DumpParser
+local Aegis = script.Aegis
+local DumpParser = require(script.DumpParser)
 local Parsed = DumpParser.fetchFromServer()
 
 local toolbar : PluginToolbar = plugin:CreateToolbar("Aegis Converter")
@@ -27,24 +27,34 @@ end
 function color3Fix(v : Color3)
 	return "Color3.new("..v.R..","..v.G..","..v.B..")"
 end
+function nameCheck(name : string, cache : {})
+	table.insert(cache, name)
+	local count = 0
+	for _, v in pairs(cache) do
+		if v == name then count += 1 end
+	end
+	return name..tostring(count)
+end
 
 button.Click:Connect(function()
 	local total = {Selection:Get()[1], table.unpack(Selection:Get()[1]:GetDescendants())}
 	local outputScript = Instance.new("Script", workspace)
 	local finishedStrings = {}
+	local nameCache = {}
 	local finalOutput = ""
 	
 	outputScript.Name = "result"
 	Aegis:Clone().Parent = outputScript
 	
 	for index, current : Instance in pairs(total) do
-		local dump : DumpParser.t = Parsed:GetChangedProperties(current)
+		local dump  = Parsed:GetChangedProperties(current)
 
 		if dump ~= nil then
 			local template : Instance = Instance.new(current.ClassName)
-			local finishedConstructor : string = "local "..current.Name..tostring(index).." = "..string.format(format, current.ClassName)
+			local finalName = nameCheck(current.Name, nameCache)				
+			local finishedConstructor : string = "local "..finalName.." = "..string.format(format, current.ClassName)
 			
-			for _, p in pairs(dump) do
+			for _, p : {Name : string} in pairs(dump) do
 				
 				p = p.Name
 				
@@ -59,6 +69,7 @@ button.Click:Connect(function()
 					if typeof(current[p]) == "UDim" then property = udimFix(current[p]) end
 					if typeof(current[p]) == "Color3" then property = color3Fix(current[p]) end
 					if p == "FontFace" then property = "Font.new('"..current.FontFace.Family.."')" end
+					if tostring(property) == "inf" then property = "Vector3.new(math.huge(), math.huge(), math.huge())" end
 
 					local newString : string = p.. " = ".. tostring(property)..";"
 					finishedConstructor = finishedConstructor.."\n\t".. newString
